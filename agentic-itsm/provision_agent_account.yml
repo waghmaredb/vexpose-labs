@@ -1,0 +1,24 @@
+---
+# Provision the least-privilege ServiceNow integration account for the agent.
+#
+# Companion code for:
+#   https://vexpose.blog/2026/07/16/agentic-itsm-reference-architecture/
+#
+# The point isn't Ansible specifically — it's that "what can this agent touch"
+# should be a diff someone approved, not tribal knowledge.
+- name: Ensure agent service account has ONLY scoped roles
+  vars:
+    agent_roles:
+      - itil            # read/update incidents
+      - snc_read_only   # broad read, no write
+  ansible.builtin.uri:
+    url: "{{ sn_instance }}/api/now/table/sys_user_has_role"
+    method: POST
+    user: "{{ sn_admin_user }}"
+    password: "{{ sn_admin_pass }}"
+    body_format: json
+    body:
+      user: "{{ agent_sys_id }}"
+      role: "{{ item }}"
+  loop: "{{ agent_roles }}"
+  # No admin, no security_admin. If the agent needs more, that's a reviewed PR.

@@ -1,0 +1,24 @@
+# An honest fio job for enterprise storage.
+#
+# Companion code for:
+#   https://vexpose.blog/the-benchmark-trap/
+#
+# Run:  fio db-like.fio --directory=/mnt/scratch
+# NOTE: writes a 200g file; point --directory at scratch space you can lose.
+
+[global]
+ioengine=libaio
+direct=1                   # measure storage, not the page cache
+runtime=600
+time_based=1
+ramp_time=60               # reach steady state before recording
+group_reporting=1
+
+[db-like]
+rw=randrw
+rwmixread=70               # 70/30 read-write, like an OLTP database
+bs=16k                     # your real block size, not 4k
+iodepth=32                 # realistic, not a vanity QD of 256
+numjobs=4
+size=200g                  # larger than the array's cache
+percentile_list=99:99.9    # report the tail, not just the average
