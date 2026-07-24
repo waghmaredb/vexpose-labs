@@ -18,6 +18,7 @@ The premise of the blog is simple: state the call a technology leader has to mak
 | [`inference/`](./inference) | [The Inference Bill Is a Memory-Bandwidth Problem](https://vexpose.blog/) | A bandwidth-bound token-cost calculator: decode speed from arithmetic |
 | [`ansible/`](./ansible) | [Your Ansible Playbook Says 'changed' Every Run. It's Lying.](https://vexpose.blog/) | Idempotency fixes and a CI gate that fails on a non-converging second run |
 | [`iac-guardrails/`](./iac-guardrails) | [Operating DNA, Not Templates](https://vexpose.blog/) | A paved-road module + OPA/Conftest policy that blocks non-compliant merges |
+| [`latency-benchmarking/`](./latency-benchmarking) | [Coordinated Omission: Why Your p99 Latency Is Lying](https://vexpose.blog/) | A closed-loop stall demo: naive vs schedule-corrected percentiles |
 
 ## Principle
 
