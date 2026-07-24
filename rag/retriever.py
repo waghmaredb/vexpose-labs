@@ -20,6 +20,15 @@ class Chunk:
     score: float = 0.0
 
 
+def can_read(user, doc_id: str) -> bool:
+    """Entitlement check — source this from the SAME ACLs as the system of record
+    (row-level security, document permissions), never re-invent it here. Default
+    deny: if you can't prove the user may see the doc, they can't.
+    """
+    allowed = getattr(user, "allowed_doc_ids", None)
+    return bool(allowed) and doc_id in allowed
+
+
 class GroundedRetriever:
     def __init__(self, bm25, vector_index, reranker, min_score: float = 0.35):
         self.bm25 = bm25                 # keyword search backend
@@ -27,18 +36,24 @@ class GroundedRetriever:
         self.reranker = reranker         # cross-encoder: (query, chunk) -> score
         self.min_score = min_score       # relevance floor; below this we refuse
 
-    def retrieve(self, query: str, k: int = 5) -> list[Chunk]:
+    def retrieve(self, query: str, user=None, k: int = 5) -> list[Chunk]:
         # 1) Hybrid recall: keyword catches exact terms, vectors catch meaning.
         candidates = self._dedupe(
             self.bm25.search(query, k=20) + self.vector_index.search(query, k=20)
         )
 
-        # 2) Rerank the union with a cross-encoder — the single biggest quality win.
+        # 2) Access control belongs in RETRIEVAL, not the prompt. Trim to what THIS
+        #    user may see BEFORE rerank, so unauthorized chunks never influence
+        #    ranking or reach the model. Least privilege for RAG.
+        if user is not None:
+            candidates = [c for c in candidates if can_read(user, c.doc_id)]
+
+        # 3) Rerank the union with a cross-encoder — the single biggest quality win.
         for c in candidates:
             c.score = self.reranker.score(query, c.text)
         candidates.sort(key=lambda c: c.score, reverse=True)
 
-        # 3) Relevance floor: if nothing is actually relevant, return nothing.
+        # 4) Relevance floor: if nothing is actually relevant, return nothing.
         #    An empty result is a feature — it lets the generator refuse.
         top = [c for c in candidates[:k] if c.score >= self.min_score]
         return top

@@ -1,0 +1,37 @@
+---
+# Idempotency: make every task's status mean something.
+# Companion to: Your Ansible Playbook Says 'changed' Every Run. It's Lying.
+#   https://vexpose.blog/
+#
+# A `changed` on a converged host is a broken signal — it can no longer tell you
+# when something genuinely drifted. command/shell report changed by definition
+# unless you tell them how to judge the result.
+- name: Idempotency patterns
+  hosts: all
+  become: true
+  tasks:
+
+    # ---- THE TRAP -------------------------------------------------------------
+    # shell has no concept of state: always "changed", and errors the 2nd run.
+    # - name: Ensure the app user exists (WRONG)
+    #   ansible.builtin.shell: useradd appuser
+
+    # ---- FIX 1: use the module that understands desired state -----------------
+    - name: Ensure the app user exists
+      ansible.builtin.user:
+        name: appuser
+        state: present          # creates once, then reports ok
+
+    # ---- FIX 2: when you MUST shell out, guard it with creates ----------------
+    - name: Rebuild the search index only when the marker is stale
+      ansible.builtin.command: /opt/app/reindex.sh
+      args:
+        creates: /var/lib/app/.reindexed   # skip entirely if this file exists
+
+    # ---- FIX 3: define "changed" yourself from the command's own output -------
+    - name: Apply schema migrations
+      ansible.builtin.command: migrate --apply
+      register: migrate_out
+      changed_when: "'Applied' in migrate_out.stdout"
+      failed_when: >
+        migrate_out.rc != 0 and 'up to date' not in migrate_out.stderr

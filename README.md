@@ -12,6 +12,12 @@ The premise of the blog is simple: state the call a technology leader has to mak
 | [`storage-benchmarking/`](./storage-benchmarking) | [The Benchmark Trap](https://vexpose.blog/the-benchmark-trap/) | An honest `fio` job for enterprise storage |
 | [`rag/`](./rag) | [A Reference Architecture for Enterprise RAG](https://vexpose.blog/) | Grounded retrieval: hybrid search, reranking, a citation guard, and a faithfulness eval |
 | [`servicenow-pagination/`](./servicenow-pagination) | [The ServiceNow REST pagination gotcha](https://vexpose.blog/) | Why offset pagination silently drops records — and the `sys_id` cursor fix |
+| [`terraform/`](./terraform) | [The Terraform Gotcha That Destroys the Resource You Meant to Keep](https://vexpose.blog/) | The `count` trap, the `for_each` fix, and a no-downtime state migration |
+| [`kubernetes/`](./kubernetes) | [The Readiness Probe That Turned a Deploy Into an Outage](https://vexpose.blog/) | Shallow readiness + startupProbe + `maxUnavailable: 0` vs the rollout death spiral |
+| [`pgvector/`](./pgvector) | [Your pgvector Search Gets Slower as You Add Data](https://vexpose.blog/) | IVFFlat `lists`/`probes` tuning and a recall@k regression gate |
+| [`inference/`](./inference) | [The Inference Bill Is a Memory-Bandwidth Problem](https://vexpose.blog/) | A bandwidth-bound token-cost calculator: decode speed from arithmetic |
+| [`ansible/`](./ansible) | [Your Ansible Playbook Says 'changed' Every Run. It's Lying.](https://vexpose.blog/) | Idempotency fixes and a CI gate that fails on a non-converging second run |
+| [`iac-guardrails/`](./iac-guardrails) | [Operating DNA, Not Templates](https://vexpose.blog/) | A paved-road module + OPA/Conftest policy that blocks non-compliant merges |
 
 ## Principle
 

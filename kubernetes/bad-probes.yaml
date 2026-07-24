@@ -1,0 +1,35 @@
+# The trap: readiness hits a downstream dependency, with no warm-up.
+# Companion to: The Readiness Probe That Turned a Deploy Into an Outage
+#   https://vexpose.blog/
+#
+# Two compounding mistakes:
+#   1) /healthz also pings the database, so a brief DB hiccup marks EVERY replica
+#      unready at once -> a self-inflicted full outage.
+#   2) failureThreshold: 1 with initialDelaySeconds: 0 means the smallest
+#      transient (or a slow boot) evicts the pod from the Service.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-bad
+spec:
+  replicas: 4
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1   # begins retiring old pods before new ones are ready
+  selector:
+    matchLabels: { app: web-bad }
+  template:
+    metadata:
+      labels: { app: web-bad }
+    spec:
+      containers:
+        - name: web
+          image: your-app:latest
+          ports: [{ containerPort: 8080 }]
+          readinessProbe:
+            httpGet:
+              path: /healthz        # <-- also checks the database (deep dependency)
+              port: 8080
+            initialDelaySeconds: 0  # checked before the app can even listen
+            periodSeconds: 5
+            failureThreshold: 1     # one blip = pulled from rotation

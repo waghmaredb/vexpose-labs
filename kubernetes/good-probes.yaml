@@ -1,0 +1,45 @@
+# The fix: a shallow readiness check + a startupProbe + maxUnavailable: 0.
+# Companion to: The Readiness Probe That Turned a Deploy Into an Outage
+#
+#   * /ready answers ONLY "can this process serve?" — no deep dependencies, so one
+#     slow database can't yank every pod out of rotation at once.
+#   * startupProbe grants slow boots up to 150s (30 x 5s) WITHOUT weakening liveness.
+#   * maxUnavailable: 0 keeps an old pod until a new one is genuinely ready.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  replicas: 4
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0   # never retire an old pod until a new one is Ready
+      maxSurge: 1
+  selector:
+    matchLabels: { app: web }
+  template:
+    metadata:
+      labels: { app: web }
+    spec:
+      containers:
+        - name: web
+          image: your-app:latest
+          ports: [{ containerPort: 8080 }]
+
+          # Give slow starters room; liveness stays strict underneath.
+          startupProbe:
+            httpGet: { path: /healthz, port: 8080 }
+            failureThreshold: 30
+            periodSeconds: 5          # up to 150s to boot, then normal probes run
+
+          readinessProbe:
+            httpGet:
+              path: /ready            # shallow: "can THIS process serve?" only
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet: { path: /healthz, port: 8080 }
+            periodSeconds: 10
+            failureThreshold: 3
